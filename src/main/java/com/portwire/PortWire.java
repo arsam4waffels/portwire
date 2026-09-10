@@ -13,29 +13,62 @@ public class PortWire {
 
     public PortWire() throws IOException {
         final int PORT = 8080;
-        // Creates the port of connection
+
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
-
-            while (true) {
-                // accepts the connection with a client
-                try (Socket socket = serverSocket.accept()) {
-                    // get client input
-                    InputStream inputStream = socket.getInputStream();
-
-                    int data;
-                    while ((data = inputStream.read()) != -1) {
-                        System.out.println((char) data);
-                    }
-                    // reads client input
-                    InputStreamReader inputStreamReader = new InputStreamReader(
-                            inputStream, StandardCharsets.UTF_8
-                    );
-                    BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-
-                    // send client the output
-                    OutputStream outputStream = socket.getOutputStream();
-                }
-            }
+            System.out.println(
+                    "Server is monitoring on port " + PORT
+            );
+            while (true) handelClient(serverSocket.accept());
+        } catch (IOException e) {
+            System.out.println(
+                    "Server error: " + e.getMessage()
+            );
         }
+    }
+
+    private static void handelClient(Socket socket) {
+        try (socket) {
+            InputStream inputStream = socket.getInputStream();
+            InputStreamReader inputStreamReader = new InputStreamReader(
+                    inputStream,
+                    StandardCharsets.UTF_8
+            );
+            BufferedReader bufferedReader = new BufferedReader(
+                    inputStreamReader
+            );
+
+            String line;
+
+            while ((line = bufferedReader.readLine()) != null) {
+                System.out.println(line);
+                if (line.isEmpty()) break;
+            }
+            sendResponse(socket);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    private static void sendResponse(Socket socket) throws IOException {
+        String body = "Oreo said Meow";
+        byte[] bodyByte = body.getBytes(
+                StandardCharsets.UTF_8
+        );
+        // I have no idea what these are.
+        // I only got them when running the server port.
+        String responseHeaders =
+                "HTTP/1.1 200 OK\r\n"
+                        + "Content-Type: text/plain; charset=UTF-8\r\n"
+                        + "Content-Length: " + bodyByte.length + "\r\n"
+                        + "Connection: close\r\n"
+                        + "\r\n";
+
+        OutputStream outputStream = socket.getOutputStream();
+        outputStream.write(
+                responseHeaders.getBytes(
+                        StandardCharsets.UTF_8
+                )
+        );
+        outputStream.write(bodyByte);
+        outputStream.flush();
     }
 }
