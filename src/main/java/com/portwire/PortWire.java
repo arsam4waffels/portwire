@@ -37,22 +37,50 @@ public class PortWire {
                     inputStreamReader
             );
 
+            String requestLine = bufferedReader.readLine();
+            String[] requestParts = requestLine.split(" ");
+
+            if (requestLine == null || requestLine.isEmpty()) return;
+
+            System.out.println("Request line: " + requestLine);
+
+            if (requestParts.length != 3) {
+                sendBadRequest(socket);
+                return;
+            }
+
+            String method = requestParts[0];
+            String path = requestParts[1];
+            String version = requestParts[2];
+
+            System.out.println("Method: " + method);
+            System.out.println("Path: " + path);
+            System.out.println("Version: " + version);
+
             String line;
 
             while ((line = bufferedReader.readLine()) != null) {
                 System.out.println(line);
                 if (line.isEmpty()) break;
             }
-            sendResponse(socket);
+            sendResponse(socket, method, path, version);
         } catch (IOException e) {
             System.out.println(
                     "Server error: " + e.getMessage()
             );
         }
     }
-    private static void sendResponse(Socket socket) throws IOException {
-        String body = "Oreo said Meow";
-        byte[] bodyByte = body.getBytes(
+    private static void sendResponse(
+            Socket socket,
+            String method,
+            String path,
+            String version
+    ) throws IOException {
+        String body =
+                "Method: " + method + "\n"
+                + "Path: " + path + "\n"
+                + "Version: " + version + "\n";
+        byte[] bodyBytes = body.getBytes(
                 StandardCharsets.UTF_8
         );
         // I have no idea what these are.
@@ -60,7 +88,7 @@ public class PortWire {
         String responseHeaders =
                 "HTTP/1.1 200 OK\r\n"
                         + "Content-Type: text/plain; charset=UTF-8\r\n"
-                        + "Content-Length: " + bodyByte.length + "\r\n"
+                        + "Content-Length: " + bodyBytes.length + "\r\n"
                         + "Connection: close\r\n"
                         + "\r\n";
 
@@ -70,7 +98,30 @@ public class PortWire {
                         StandardCharsets.UTF_8
                 )
         );
-        outputStream.write(bodyByte);
+        outputStream.write(bodyBytes);
         outputStream.flush();
+    }
+    private static void sendBadRequest(Socket socket) throws IOException {
+        String err = "400 Bad Request";
+        byte[] bodyBytes = err.getBytes(
+                StandardCharsets.UTF_8
+        );
+        String response =
+                "HTTP/1.1 400 Bad Request\r\n"
+                        + "Content-Type: text/plain; charset=UTF-8\r\n"
+                        + "Content-Length: " + bodyBytes.length + "\r\n"
+                        + "Connection: close\r\n"
+                        + "\r\n";
+        OutputStream output =
+                socket.getOutputStream();
+
+        output.write(
+                response.getBytes(
+                        StandardCharsets.UTF_8
+                )
+        );
+
+        output.write(bodyBytes);
+        output.flush();
     }
 }
