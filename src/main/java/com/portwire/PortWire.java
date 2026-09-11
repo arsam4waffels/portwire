@@ -18,7 +18,7 @@ public class PortWire {
             System.out.println(
                     "Server is monitoring on port " + PORT
             );
-            while (true) handelClient(serverSocket.accept());
+            while (true) handleClient(serverSocket.accept());
         } catch (IOException e) {
             System.out.println(
                     "Server error: " + e.getMessage()
@@ -26,7 +26,7 @@ public class PortWire {
         }
     }
 
-    private static void handelClient(Socket socket) {
+    private static void handleClient(Socket socket) {
         try (socket) {
             InputStream inputStream = socket.getInputStream();
             InputStreamReader inputStreamReader = new InputStreamReader(
