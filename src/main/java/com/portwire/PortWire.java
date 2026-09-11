@@ -27,27 +27,36 @@ public class PortWire {
     }
 
     private static void handleClient(Socket socket) {
-        try (socket) {
+        try (socket) { // access to client
+
+            // It reads the bytes coming from the client
             InputStream inputStream = socket.getInputStream();
+
+            // Converts bytes to characters using UTF-8
             InputStreamReader inputStreamReader = new InputStreamReader(
                     inputStream,
                     StandardCharsets.UTF_8
             );
+
+            // It makes working with text easier
             BufferedReader bufferedReader = new BufferedReader(
                     inputStreamReader
             );
 
             String requestLine = bufferedReader.readLine();
-            String[] requestParts = requestLine.split(" ");
 
             if (requestLine == null || requestLine.isEmpty()) return;
 
-            System.out.println("Request line: " + requestLine);
+            // It places each individual word into an array
+            // ["GET", "/link", "HTTP/1.1"]
+            String[] requestParts = requestLine.split(" ");
 
             if (requestParts.length != 3) {
                 sendBadRequest(socket);
                 return;
             }
+
+            System.out.println("Request line: " + requestLine);
 
             String method   = requestParts[0];
             String path     = requestParts[1];
@@ -58,7 +67,6 @@ public class PortWire {
             System.out.println("Version: "  + version);
 
             String line;
-
             while ((line = bufferedReader.readLine()) != null) {
                 System.out.println(line);
                 if (line.isEmpty()) break;
