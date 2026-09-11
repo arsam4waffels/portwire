@@ -45,7 +45,9 @@ public class PortWire {
             }
             sendResponse(socket);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            System.out.println(
+                    "Server error: " + e.getMessage()
+            );
         }
     }
     private static void sendResponse(Socket socket) throws IOException {
