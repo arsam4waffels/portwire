@@ -8,6 +8,8 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
 public class PortWire {
 
@@ -18,9 +20,11 @@ public class PortWire {
             System.out.println(
                     "Server is monitoring on port " + PORT
             );
+
             while (true) handleClient(serverSocket.accept());
+
         } catch (IOException e) {
-            System.out.println(
+            System.err.println(
                     "Server error: " + e.getMessage()
             );
         }
@@ -52,42 +56,86 @@ public class PortWire {
             String[] requestParts = requestLine.split(" ");
 
             if (requestParts.length != 3) {
-                sendBadRequest(socket);
+                sendResponse(
+                        socket,
+                        400,
+                        "Bad Request"
+                );
                 return;
             }
-
-            System.out.println("Request line: " + requestLine);
 
             String method   = requestParts[0];
             String path     = requestParts[1];
             String version  = requestParts[2];
 
+            Map<String, String> headers = readHeaders(bufferedReader);
+
             System.out.println("Method: "   + method);
             System.out.println("Path: "     + path);
             System.out.println("Version: "  + version);
 
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                System.out.println(line);
-                if (line.isEmpty()) break;
-            }
-            sendResponse(socket, method, path, version);
+            for (Map.Entry<String, String> entry : headers.entrySet())
+                System.out.println(
+                        "Header: "
+                                + entry.getKey()
+                                + " = "
+                                + entry.getValue()
+                );
+
+            String host = headers.get("host");
+
+            String body =
+                    "Method: " + method + "\n"
+                            + "Path: " + path + "\n"
+                            + "Version: " + version + "\n"
+                            + "Host: " + host + "\n";
+
+//            String line;
+//            while ((line = bufferedReader.readLine()) != null) {
+//                System.out.println(line);
+//                if (line.isEmpty()) break;
+//            }
+            sendResponse(socket, 200, body);
         } catch (IOException e) {
             System.out.println(
                     "Server error: " + e.getMessage()
             );
         }
     }
+    private static Map<String, String> readHeaders(
+            BufferedReader reader
+    ) throws IOException {
+
+        Map<String, String> headers = new HashMap<>();
+
+        String line;
+        while ((line = reader.readLine()) != null) {
+            if (line.isEmpty()) break;
+
+            int colonIndex = line.indexOf(':');
+            if (colonIndex == -1) continue;
+
+            String name = line
+                    .substring(0, colonIndex)
+                    .trim()
+                    .toLowerCase();
+
+            String value = line
+                    .substring(colonIndex + 1)
+                    .trim();
+
+            headers.put(name, value);
+        }
+
+        return headers;
+    }
     private static void sendResponse(
             Socket socket,
-            String method,
-            String path,
-            String version
+            int statusCode,
+            String body
     ) throws IOException {
-        String body =
-                "Method: " + method + "\n"
-                + "Path: " + path + "\n"
-                + "Version: " + version + "\n";
+        String reasonPhrase = getReasonPhrase(statusCode);
+
         byte[] bodyBytes = body.getBytes(
                 StandardCharsets.UTF_8
         );
@@ -109,29 +157,13 @@ public class PortWire {
         outputStream.write(bodyBytes);
         outputStream.flush();
     }
-    private static void sendBadRequest(Socket socket) throws IOException {
-        final String ERR_400 = "400 Bad Request";
-        final String ERR_404 = "404 Not Found";
-        final String ERR_500 = "500 Server Runtime";
-        byte[] bodyBytes = ERR_400.getBytes(
-                StandardCharsets.UTF_8
-        );
-        String response =
-                "HTTP/1.1 400 Bad Request\r\n"
-                        + "Content-Type: text/plain; charset=UTF-8\r\n"
-                        + "Content-Length: " + bodyBytes.length + "\r\n"
-                        + "Connection: close\r\n"
-                        + "\r\n";
-        OutputStream output =
-                socket.getOutputStream();
-
-        output.write(
-                response.getBytes(
-                        StandardCharsets.UTF_8
-                )
-        );
-
-        output.write(bodyBytes);
-        output.flush();
+    private static String getReasonPhrase(
+            int statusCode
+    ) {
+        return switch (statusCode) {
+            case 200 -> "OK";
+            case 400 -> "Bad Request";
+            default -> "Unknown";
+        };
     }
 }
