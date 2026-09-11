@@ -49,13 +49,13 @@ public class PortWire {
                 return;
             }
 
-            String method = requestParts[0];
-            String path = requestParts[1];
-            String version = requestParts[2];
+            String method   = requestParts[0];
+            String path     = requestParts[1];
+            String version  = requestParts[2];
 
-            System.out.println("Method: " + method);
-            System.out.println("Path: " + path);
-            System.out.println("Version: " + version);
+            System.out.println("Method: "   + method);
+            System.out.println("Path: "     + path);
+            System.out.println("Version: "  + version);
 
             String line;
 
@@ -102,8 +102,10 @@ public class PortWire {
         outputStream.flush();
     }
     private static void sendBadRequest(Socket socket) throws IOException {
-        String err = "400 Bad Request";
-        byte[] bodyBytes = err.getBytes(
+        final String ERR_400 = "400 Bad Request";
+        final String ERR_404 = "404 Not Found";
+        final String ERR_500 = "500 Server Runtime";
+        byte[] bodyBytes = ERR_400.getBytes(
                 StandardCharsets.UTF_8
         );
         String response =
