@@ -1,4 +1,4 @@
-package com.portwire;
+package com.portwire.HTTP;
 
 import java.io.BufferedReader;
 import java.io.IOException;
