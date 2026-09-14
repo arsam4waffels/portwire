@@ -15,7 +15,7 @@ public class Router {
             case "/about" -> HttpResponse.ok(
                     "<h1>About</h1><p>Built with pure Java.</p>"
             );
-            case "/oreo" -> HttpResponse.ok(
+            case "/Oreo" -> HttpResponse.ok(
                     "<h1>Oreo</h1><p>It's my cat, and I love him.</p>"
             );
             default -> HttpResponse.notFound();
